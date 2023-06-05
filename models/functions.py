@@ -1,41 +1,47 @@
+from decorators.logged import logged
+from exceptions.eat_exception import EatException
 from managers.insect_manager import InsectManager
 from models.bee import Bee
 from models.butterfly import Butterfly
 from models.hornet import Hornet
 from models.mosquito import Mosquito
+import logging
 
 def main():
+    # Create an instance of the InsectManager class
     insect_manager = InsectManager()
-    insect_manager.add_insects(
-        Mosquito("Mosquito", 6, True, True, True),
-        Hornet("Hornet", 6, True, True, 5),
-        Bee("Bee", 6, True, False, True),
-        Butterfly("Butterfly", 6, True, False, True, 10))
 
+    # Add instances of different insect models to the insect manager
+    insect_manager.add_insects(
+        Mosquito("Mosquito", 6, True, False, True),
+        Hornet("Hornet", 6, True, False, True),
+        Bee("Bee", 6, True, False, False),
+        Butterfly("Butterfly", 6, True, False, False, True))
+
+    # Modify an insect's attribute to trigger the exception
+    insect_manager.insects[0].can_eat = False
+
+    # Print insects with 6 legs
     print("Insects with 6 legs:")
     print(*insect_manager.find_all_with_number_of_legs(6), sep=" | ")
 
+    # Print insects with wings
     print("\nInsects with wings:")
     for insect in insect_manager.find_all_with_wings():
         print(insect)
 
-    results = [f"{index}: {insect.find_name()}: {insect}" for index, insect in enumerate(insect_manager, start=1)
-               for insect, name in zip(insect_manager, map(lambda x: x.find_name(), insect_manager))]
-    print("\nName of insects:")
-    print(*results, sep=" | ")
+    # Define a function that is decorated with the 'logged' decorator
+    @logged(EatException, "file")
+    def write_to_file(message):
+        if message == "0":
+            raise EatException("The insect wants to eat")
+    try:
+        # Call the decorated function
+        write_to_file("0")
+    except EatException as e:
+        # Handle the exception by writing it to a file
+        e.write_to_file()
 
-    insect = Mosquito("Mosquito", 6, True, True, True)
-    attributes = insect.get_attributes_by_type(int)
-    print("\nAttributes with int type:")
-    print(*attributes.values(), sep=" | ")
-
-    all_condition = all(insect.can_inject_poison() for insect in insect_manager)
-    any_condition = any(insect.survive_over_winter() for insect in insect_manager)
-
-    conditions_dict = {"all": all_condition, "any": any_condition}
-    print("\nConditions:")
-    print(conditions_dict)
 
 if __name__ == "__main__":
     main()
-
